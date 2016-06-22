@@ -66,6 +66,11 @@ namespace TypeUtils.Services
         /// <param name="target"></param>
         public void map<T_Source, T_Target>(T_Source source, T_Target target)
         {
+            if (source == null)
+                throw new ArgumentNullException(nameof(source));
+            if (target == null)
+                throw new ArgumentNullException(nameof(target));
+
             var sourceLookup = getPropertyLookup(typeof(T_Source));
             var targetLookup = getPropertyLookup(typeof(T_Target));
 
@@ -78,6 +83,52 @@ namespace TypeUtils.Services
 
                 mapValue(sourceAccessor, source, targetAccessor, target);
             }
+        }
+
+        /// <summary>
+        /// Parallel maps all objects from sources to new objects of type T_Target. If T_Target is not 
+        /// threadsafe MaxDegreeOfParallelism should be set to 1. Ordering of source keeps stable.
+        /// </summary>
+        /// <typeparam name="T_Source"></typeparam>
+        /// <typeparam name="T_Target"></typeparam>
+        /// <param name="sources"></param>
+        /// <param name="opts"></param>
+        /// <returns></returns>
+        public IList<T_Target> mapAll<T_Source, T_Target>(IList<T_Source> sources, ParallelOptions opts = null) where T_Target : new()
+        {
+            if (sources == null)
+                throw new ArgumentNullException(nameof(sources));
+
+            var result = new T_Target[sources.Count];
+
+            var sourceLookup = getPropertyLookup(typeof(T_Source));
+            var targetLookup = getPropertyLookup(typeof(T_Target));
+
+            opts = opts ?? new ParallelOptions()
+            {
+                MaxDegreeOfParallelism = Int32.MaxValue
+            };
+
+            Parallel.For(0, sources.Count, opts, i =>
+            {
+                var source = sources[i];
+
+                var target = ObjectCreator<T_Target>.Create();
+
+                foreach (var targetAccessor in targetLookup.Values)
+                {
+                    PropertyAccessors sourceAccessor = null;
+
+                    if (!sourceLookup.TryGetValue(targetAccessor.PropertyName, out sourceAccessor))
+                        continue;
+
+                    mapValue(sourceAccessor, source, targetAccessor, target);
+                }
+
+                result[i] = target;
+            });
+
+            return result;
         }
 
         /// <summary>
@@ -102,10 +153,9 @@ namespace TypeUtils.Services
             }
             else
             {
-                var sourceValue = sourceAccessor.Getter(source);
-
                 var targetValue = TypeConverter.Current.convert(
-                    sourceValue, targetAccessor.PropertyType);
+                    sourceAccessor.Getter(source), 
+                    targetAccessor.PropertyType);
 
                 targetAccessor.Setter(target, targetValue);
             }
@@ -130,17 +180,10 @@ namespace TypeUtils.Services
 
                     foreach (var propertyInfo in type.GetProperties())
                     {
-
-                        var setter = getSetter(propertyInfo);
-                        var getter = getGetter(propertyInfo);
-
-                        if (getter == null && setter == null)
-                            continue;
-
                         var accessors = new PropertyAccessors()
                         {
-                            Getter = getter,
-                            Setter = setter,
+                            Getter = getGetter(propertyInfo),
+                            Setter = getSetter(propertyInfo),
                             PropertyName = propertyInfo.Name,
                             PropertyType = propertyInfo.PropertyType
                         };
@@ -174,7 +217,7 @@ namespace TypeUtils.Services
             // Load value to stack
             gen.Emit(OpCodes.Ldarg_1);
 
-            // Unboxing
+            // Unboxing only if property is valuetype
             gen.Emit(OpCodes.Unbox_Any, property.PropertyType);
 
             // Call setter of target property
@@ -206,8 +249,9 @@ namespace TypeUtils.Services
             // Call setter of target property
             gen.Emit(OpCodes.Callvirt, getMethodInfo);
 
-            // Unboxing
-            gen.Emit(OpCodes.Box, property.PropertyType);
+            // Box only if property is valuetype
+            if (property.PropertyType.IsValueType)
+                gen.Emit(OpCodes.Box, property.PropertyType);
 
             // Exit
             gen.Emit(OpCodes.Ret);

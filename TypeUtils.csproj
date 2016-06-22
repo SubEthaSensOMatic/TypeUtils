@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Services\ObjectCreator.cs" />
     <Compile Include="Services\ObjectMapper.cs" />
     <Compile Include="Services\TypeConverter.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
