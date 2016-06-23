@@ -41,8 +41,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Services\IPropertyMapper.cs" />
+    <Compile Include="Services\Mapping.cs" />
     <Compile Include="Services\ObjectCreator.cs" />
-    <Compile Include="Services\ObjectMapper.cs" />
+    <Compile Include="Services\PropertyMapperFactory.cs" />
     <Compile Include="Services\TypeConverter.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -25,14 +25,45 @@ namespace TypeUtilsTest
         public string E { get; set; }
     }
 
+    public class Trillian2
+    {
+        public string A { get; set; }
+        public double B { get; set; }
+        public double C { get; set; }
+        public string E { get; set; }
+    }
+
     [TestClass]
     public class MapperTest
     {
+        public static IPropertyMapper _mapper;
+        public static IPropertyMapper _mapperNoConversionNeeded;
+
+        [ClassInitialize]
+        public static void initClass(TestContext testContext)
+        {
+            var mapping = new Mapping<Trillian, Marvin>()
+                .map("A", "A")
+                .map("B", "B")
+                .map("C", "C")
+                .map("E", "E");
+
+            _mapper = new PropertyMapperFactory()
+                .createPropertyMapper(mapping);
+
+            var mapping2 = new Mapping<Trillian, Trillian2>()
+                .map("A")
+                .map("B")
+                .map("C")
+                .map("E");
+
+            _mapperNoConversionNeeded = new PropertyMapperFactory().createPropertyMapper(mapping2);
+        }
+
+
         [TestMethod]
         public void TestSimpleObjectMapping()
         {
-            var mapper = new ObjectMapper();
-
             var source = new Trillian()
             {
                 A = "BE5B1F80-B878-44B4-8B61-DEADBEEF0000",
@@ -43,7 +74,7 @@ namespace TypeUtilsTest
 
             var target = new Marvin();
 
-            mapper.map(source, target);
+            _mapper.map(source, target);
 
             Assert.AreEqual(Guid.Parse("BE5B1F80-B878-44B4-8B61-DEADBEEF0000"), target.A);
             Assert.AreEqual(1235, target.B);
@@ -52,61 +83,36 @@ namespace TypeUtilsTest
         }
 
         [TestMethod]
-        public void MapAllTest()
-        {
-            var mapper = new ObjectMapper();
-
-            var sources = new List<Trillian>()
-            {
-                new Trillian()
-                {
-                    A = "BE5B1F80-B878-44B4-8B61-DEADBEEF0000",
-                    B = 1234.567,
-                    C = 42735.9998842593,
-                    E = "true"
-                },
-                new Trillian()
-                {
-                    A = "BE5B1F80-B878-44B4-8B61-DEADBEEF0000",
-                    B = 654321,
-                    C = 42735.9998842593,
-                    E = "true"
-                },
-                new Trillian()
-                {
-                    A = "BE5B1F80-B878-44B4-8B61-DEADBEEF0000",
-                    B = 1234.567,
-                    C = 42735.9998842593,
-                    E = "true"
-                }
-            };
-
-            var res = mapper.mapAll<Trillian, Marvin>(sources);
-
-            Assert.AreEqual(Guid.Parse("BE5B1F80-B878-44B4-8B61-DEADBEEF0000"), res[1].A);
-            Assert.AreEqual(654321, res[1].B);
-            Assert.AreEqual(new DateTime(2016, 12, 31, 23, 59, 50), res[1].C);
-            Assert.AreEqual(true, res[1].E);
-        }
-
-
-        [TestMethod]
         public void Performance()
         {
-            var mapper = new ObjectMapper();
+            var source = new Trillian();
+            source.A = "BE5B1F80-B878-44B4-8B61-DEADBEEF0000";
+            source.B = 1234.567;
+            source.C = 42735.9998842593;
+            source.E = "true";
 
-            var sources = new List<Trillian>();
             for (int i = 0; i < 1000000; i++)
             {
-                sources.Add(new Trillian()
-                {
-                    A = "BE5B1F80-B878-44B4-8B61-DEADBEEF0000",
-                    B = 1234.567,
-                    C = 42735.9998842593,
-                    E = "true"
-                });
+                var target = new Marvin();
+                _mapper.map(source, target);
+
             }
-            mapper.mapAll<Trillian, Marvin>(sources);
+        }
+
+        [TestMethod]
+        public void PerformanceNoConversion()
+        {
+            var source = new Trillian();
+            source.A = "BE5B1F80-B878-44B4-8B61-DEADBEEF0000";
+            source.B = 1234.567;
+            source.C = 42735.9998842593;
+            source.E = "true";
+
+            for (int i = 0; i < 1000000; i++)
+            {
+                var target = new Trillian2();
+                _mapperNoConversionNeeded.map(source, target);
+            }
         }
     }
 }
