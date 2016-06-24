@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Services\IPropertyMapper.cs" />
+    <Compile Include="Services\ITypeConverter.cs" />
     <Compile Include="Services\Mapping.cs" />
     <Compile Include="Services\ObjectCreator.cs" />
     <Compile Include="Services\PropertyMapperFactory.cs" />

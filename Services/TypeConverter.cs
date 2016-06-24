@@ -5,7 +5,7 @@ using TypeUtils.Extensions;
 
 namespace TypeUtils.Services
 {
-    public class TypeConverter
+    public class TypeConverter: ITypeConverter
     {
         /// <summary>
         /// Custom conversion method
@@ -133,6 +133,7 @@ namespace TypeUtils.Services
         /// </summary>
         /// <param name="sourceValue">Source value</param>
         /// <param name="targetType">Target type</param>
+        /// <param name="format">Format provider</param>
         /// <returns>Value of target type</returns>
         public object convert(object sourceValue, Type targetType, IFormatProvider format = null)
         {

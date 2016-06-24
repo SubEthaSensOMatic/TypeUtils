@@ -36,8 +36,10 @@ namespace TypeUtilsTest
     [TestClass]
     public class MapperTest
     {
-        public static IPropertyMapper _mapper;
-        public static IPropertyMapper _mapperNoConversionNeeded;
+        public static IPropertyMapper<Trillian, Marvin> _mapper;
+        public static IPropertyMapper<Trillian, Trillian2> _mapperNoConversionNeeded;
+        public static IPropertyMapper<Trillian, IDictionary<string, object>> _mapperPropertyToSetter;
+        public static IPropertyMapper<IDictionary<string, object>, Trillian> _mapperGetterToProperty;
 
         [ClassInitialize]
         public static void initClass(TestContext testContext)
@@ -58,6 +60,22 @@ namespace TypeUtilsTest
                 .map("E");
 
             _mapperNoConversionNeeded = new PropertyMapperFactory().createPropertyMapper(mapping2);
+
+            var mapping3 = new Mapping<Trillian, IDictionary<string, object>>()
+                .map("A", (o, value) => { o["A"] = value; })
+                .map("B", (o, value) => { o["B"] = value; })
+                .map("C", (o, value) => { o["C"] = value; })
+                .map("E", (o, value) => { o["D"] = value; });
+
+            _mapperPropertyToSetter = new PropertyMapperFactory().createPropertyMapper(mapping3);
+
+            var mapping4 = new Mapping<IDictionary<string, object>, Trillian>()
+                .map(o => o["A"], "A")
+                .map(o => o["B"], "B")
+                .map(o => o["C"], "C")
+                .map(o => o["E"], "E");
+
+            _mapperGetterToProperty = new PropertyMapperFactory().createPropertyMapper(mapping4);
         }
 
 
@@ -80,6 +98,27 @@ namespace TypeUtilsTest
             Assert.AreEqual(1235, target.B);
             Assert.AreEqual(new DateTime(2016, 12, 31, 23, 59, 50), target.C);
             Assert.AreEqual(true, target.E);
+        }
+
+        [TestMethod]
+        public void TestSimplePropertyToSetter()
+        {
+            var source = new Trillian()
+            {
+                A = "BE5B1F80-B878-44B4-8B61-DEADBEEF0000",
+                B = 1234.567,
+                C = 42735.9998842593,
+                E = "true"
+            };
+
+            var target = new Dictionary<string, object>();
+
+            _mapperPropertyToSetter.map(source, target);
+
+            Assert.AreEqual(source.A, target["A"]);
+            Assert.AreEqual(source.B, target["B"]);
+            Assert.AreEqual(source.C, target["C"]);
+            Assert.AreEqual(source.E, target["D"]);
         }
 
         [TestMethod]
