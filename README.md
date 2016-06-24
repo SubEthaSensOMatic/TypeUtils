@@ -1,5 +1,5 @@
 # TypeUtils
-**TypeUtils** is library containing tools for type conversion and high performance data mapping. 
+**TypeUtils** is library containing threadsafe tools for type conversion and high performance data mapping. 
 
 ## Installation
 You can download source and build project on your own or install package via nuget
@@ -32,6 +32,24 @@ var d2 = conv.convert("1.120,1234", CultureInfo.GetCultureInfo("de-DE"));
 ```
 
 ## Customize conversion
+You can customize **TypeConverter** and register new conversions or override existing conversions. To customize you have to register a Function with following signature
+
+```c#
+  [TargetType] customConvert([SourceType] sourceValze, Type sourceType, IFormatProvider format)
+```
+
+```c#
+// Customize global converter TypeConverter.Current or your own instance
+
+// Register conversion between DateTime and int (generic approach)
+var d1 = TypeConverter.Current.registerCustomConverter<DateTime, int> ((dt, targetType, format) => {
+  return dt.DayOfYear;
+});
+
+// do conversion
+var days = TypeConverter.Current.convert(new DateTime());
+
+```
 
 ## Mapping objects
 
