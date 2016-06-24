@@ -9,3 +9,10 @@ You can download source and build project on your own or install package via nug
 PM> Install-Package SimpleTypeUtils
 ```
 
+Converting types
+------------
+
+Mapping objects
+------------
+
+
