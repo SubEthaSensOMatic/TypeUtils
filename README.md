@@ -47,7 +47,7 @@ var d1 = TypeConverter.Current.registerCustomConverter<DateTime, int> ((dt, targ
 });
 
 // do conversion
-var days = TypeConverter.Current.convert(new DateTime());
+var days = TypeConverter.Current.convert<int>(new DateTime());
 
 ```
 
