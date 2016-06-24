@@ -12,6 +12,9 @@ PM> Install-Package SimpleTypeUtils
 Converting types
 ------------
 
+Customize conversion
+------------
+
 Mapping objects
 ------------
 
