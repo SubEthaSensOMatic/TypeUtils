@@ -1,5 +1,5 @@
 # TypeUtils
-**TypeUtils** is library containing threadsafe tools for type conversion and high performance data mapping. 
+**TypeUtils** is a library containing threadsafe tools for type conversion and high performance data mapping. 
 
 ## Installation
 You can download source and build project on your own or install package via nuget
@@ -8,7 +8,13 @@ You can download source and build project on your own or install package via nug
 PM> Install-Package SimpleTypeUtils
 ```
 
-## Converting types
+## Mapping
+
+## Create mapping definition
+
+## Create property mapper
+
+## Converting
 **TypeUtils** converter class **TypeConverter** out of the box supports converting 
 * All types implementing **IConvertible**
 * All nullable types implementing **IConvertible**
@@ -50,10 +56,3 @@ var d1 = TypeConverter.Current.registerCustomConverter<DateTime, int> ((dt, targ
 var days = TypeConverter.Current.convert<int>(new DateTime());
 
 ```
-
-## Mapping objects
-
-## Create mapping definition
-
-## Create property mapper
-
