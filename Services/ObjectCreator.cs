@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace TypeUtils.Services
 {
-    public static class ObjectCreator<T_Create> where T_Create : new()
+    public static class ObjectCreator<T_Create>
     {
         public delegate T FactoryDelegate<T>();
 
@@ -13,11 +13,7 @@ namespace TypeUtils.Services
 
         private static FactoryDelegate<T_Create> CreateFactory()
         {
-            ConstructorInfo ctor = typeof(T_Create)
-                .GetConstructors()
-                .Where(c => c.GetParameters().Length == 0)
-                .FirstOrDefault();
-
+            var ctor = typeof(T_Create).GetConstructor(Type.EmptyTypes);
             if (ctor == null)
                 throw new InvalidOperationException(typeof(T_Create).Name + " has no default constructor!");
         

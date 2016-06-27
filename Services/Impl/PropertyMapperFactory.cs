@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TypeUtils.Services
+namespace TypeUtils.Services.Impl
 {
-    public class PropertyMapperFactory
+    public class PropertyMapperFactory: IPropertyMapperFactory
     {
         /// <summary>
         /// Create mapper for mapping definition. Mapper should be cached. Creating a mapper
@@ -247,7 +247,7 @@ namespace TypeUtils.Services
 
             // No conversion needed
             return new CodeSnippetStatement(string.Format(
-                @"_mapping[{0}].Setter(target, source.{1});",
+                @"_mapping[{0}].Setter(source, target, source.{1});",
                 ruleIdx,
                 sourceProperty.Name));
         }
@@ -262,7 +262,7 @@ namespace TypeUtils.Services
 
             // No conversion needed
             return new CodeSnippetStatement(string.Format(
-                @"target.{0} = _converter.convert<{1}>(_mapping[{2}].Getter(source));",
+                @"target.{0} = _converter.convert<{1}>(_mapping[{2}].Getter(source, target));",
                 targetProperty.Name,
                 targetProperty.PropertyType.FullName,
                 ruleIdx));
@@ -272,7 +272,7 @@ namespace TypeUtils.Services
         {
             // No conversion needed
             return new CodeSnippetStatement(string.Format(
-                @"_mapping[{0}].Setter(target, _mapping[{1}].Getter(source));",
+                @"_mapping[{0}].Setter(source, target, _mapping[{1}].Getter(source, target));",
                 ruleIdx, ruleIdx));
         }
 

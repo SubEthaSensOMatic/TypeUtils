@@ -3,18 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using TypeUtils.Extensions;
 
-namespace TypeUtils.Services
+namespace TypeUtils.Services.Impl
 {
     public class TypeConverter: ITypeConverter
     {
-        /// <summary>
-        /// Custom conversion method
-        /// </summary>
-        /// <param name="sourceValue"></param>
-        /// <param name="targetType"></param>
-        /// <returns></returns>
-        public delegate object CustomConverterDelegate(object sourceValue, Type targetType, IFormatProvider format);
-
         /// <summary>
         ///  Custom converter methods
         /// </summary>
@@ -26,7 +18,7 @@ namespace TypeUtils.Services
         /// <summary>
         /// Statically created converter
         /// </summary>
-        public static TypeConverter Current {
+        public static ITypeConverter Current {
             get
             {
                 lock (_CurrentLock)
@@ -39,7 +31,7 @@ namespace TypeUtils.Services
             }
         }
 
-        private static TypeConverter _Current;
+        private static ITypeConverter _Current;
         private static readonly object _CurrentLock = new object();
 
         /// <summary>

@@ -41,12 +41,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Services\IObjectMapper.cs" />
     <Compile Include="Services\IPropertyMapper.cs" />
+    <Compile Include="Services\IPropertyMapperFactory.cs" />
     <Compile Include="Services\ITypeConverter.cs" />
     <Compile Include="Services\Mapping.cs" />
     <Compile Include="Services\ObjectCreator.cs" />
-    <Compile Include="Services\PropertyMapperFactory.cs" />
-    <Compile Include="Services\TypeConverter.cs" />
+    <Compile Include="Services\Impl\ObjectMapper.cs" />
+    <Compile Include="Services\Impl\PropertyMapperFactory.cs" />
+    <Compile Include="Services\Impl\TypeConverter.cs" />
     <Compile Include="Extensions\TypeExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

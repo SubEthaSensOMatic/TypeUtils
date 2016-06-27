@@ -1,10 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TypeUtils.Services;
+using TypeUtils.Services.Impl;
 
 namespace TypeUtilsTest
 {
@@ -34,7 +32,7 @@ namespace TypeUtilsTest
     }
 
     [TestClass]
-    public class MapperTest
+    public class PropertyMapperTest
     {
         public static IPropertyMapper<Trillian, Marvin> _mapper;
         public static IPropertyMapper<Trillian, Trillian2> _mapperNoConversionNeeded;
@@ -62,18 +60,18 @@ namespace TypeUtilsTest
             _mapperNoConversionNeeded = new PropertyMapperFactory().createPropertyMapper(mapping2);
 
             var mapping3 = new Mapping<Trillian, IDictionary<string, object>>()
-                .map("A", (o, value) => { o["A"] = value; })
-                .map("B", (o, value) => { o["B"] = value; })
-                .map("C", (o, value) => { o["C"] = value; })
-                .map("E", (o, value) => { o["D"] = value; });
+                .map("A", (source, target, value) => { target["A"] = value; })
+                .map("B", (source, target, value) => { target["B"] = value; })
+                .map("C", (source, target, value) => { target["C"] = value; })
+                .map("E", (source, target, value) => { target["D"] = value; });
 
             _mapperPropertyToSetter = new PropertyMapperFactory().createPropertyMapper(mapping3);
 
             var mapping4 = new Mapping<IDictionary<string, object>, Trillian>()
-                .map(o => o["A"], "A")
-                .map(o => o["B"], "B")
-                .map(o => o["C"], "C")
-                .map(o => o["E"], "E");
+                .map((source, target) => source["A"], "A")
+                .map((source, target) => source["B"], "B")
+                .map((source, target) => source["C"], "C")
+                .map((source, target) => source["E"], "E");
 
             _mapperGetterToProperty = new PropertyMapperFactory().createPropertyMapper(mapping4);
         }

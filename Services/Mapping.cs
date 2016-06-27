@@ -16,7 +16,7 @@ namespace TypeUtils.Services
         /// <summary>
         /// Source propery getter
         /// </summary>
-        public Func<T_Source, object> Getter { get; internal set; }
+        public Func<T_Source, T_Target, object> Getter { get; internal set; }
 
         /// <summary>
         /// Target property name
@@ -26,7 +26,7 @@ namespace TypeUtils.Services
         /// <summary>
         /// Target property setter 
         /// </summary>
-        public Action<T_Target, object> Setter { get; internal set; }
+        public Action<T_Source, T_Target, object> Setter { get; internal set; }
 
         /// <summary>
         /// Format provider 
@@ -115,7 +115,7 @@ namespace TypeUtils.Services
         /// <param name="targetProperty"></param>
         /// <param name="format"></param>
         /// <returns></returns>
-        public Mapping<T_Source, T_Target> map(Func<T_Source, object> getter, string targetProperty, IFormatProvider format = null)
+        public Mapping<T_Source, T_Target> map(Func<T_Source, T_Target, object> getter, string targetProperty, IFormatProvider format = null)
         {
             _rules.Add(new MappingRule<T_Source, T_Target>()
             {
@@ -132,11 +132,27 @@ namespace TypeUtils.Services
         /// <param name="sourceProperty"></param>
         /// <param name="setter"></param>
         /// <returns></returns>
-        public Mapping<T_Source, T_Target> map(string sourceProperty, Action<T_Target, object> setter)
+        public Mapping<T_Source, T_Target> map(string sourceProperty, Action<T_Source, T_Target, object> setter)
         {
             _rules.Add(new MappingRule<T_Source, T_Target>()
             {
                 SourceProperty = sourceProperty,
+                Setter = setter
+            });
+            return this;
+        }
+
+        /// <summary>
+        /// Map source property name to setter
+        /// </summary>
+        /// <param name="sourceProperty"></param>
+        /// <param name="setter"></param>
+        /// <returns></returns>
+        public Mapping<T_Source, T_Target> map(Func<T_Source, T_Target, object> getter, Action<T_Source, T_Target, object> setter)
+        {
+            _rules.Add(new MappingRule<T_Source, T_Target>()
+            {
+                Getter = getter,
                 Setter = setter
             });
             return this;

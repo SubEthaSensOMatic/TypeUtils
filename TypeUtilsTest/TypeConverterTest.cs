@@ -1,9 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TypeUtils.Extensions;
-using System.Text;
-using TypeUtils.Services;
 using System.Globalization;
 using System;
+using TypeUtils.Services.Impl;
 
 namespace TypeUtilsTest
 {
