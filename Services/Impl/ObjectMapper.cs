@@ -8,13 +8,6 @@ namespace TypeUtils.Services.Impl
 {
     public class ObjectMapper: IObjectMapper
     {
-        private class MapperHolder
-        {
-            public IPropertyMapper Mapper { get; set; }
-
-            public TargetFactoryDelegate TargetFactory { get; set; }
-        }
-
         /// <summary>
         /// Statically created mapper
         /// </summary>
@@ -36,8 +29,8 @@ namespace TypeUtils.Services.Impl
         private static readonly object _CurrentLock = new object();
 
 
-        private Dictionary<Tuple<Type, Type>, MapperHolder> _propertyMapperLookup 
-            = new Dictionary<Tuple<Type, Type>, MapperHolder>();
+        private Dictionary<Tuple<Type, Type>, IPropertyMapper> _propertyMapperLookup 
+            = new Dictionary<Tuple<Type, Type>, IPropertyMapper>();
         private readonly object _propertyMapperLookupLock = new object();
 
         private IPropertyMapperFactory _propertyMapperFactory;
@@ -66,10 +59,6 @@ namespace TypeUtils.Services.Impl
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
 
-            // Factory function should be set or T_Target must have default constructor
-            if (factory == null)
-                factory = () => ObjectCreator<T_Target>.Create();
-
             lock (_propertyMapperLookupLock)
             {
                 var key = Tuple.Create(typeof(T_Source), typeof(T_Target));
@@ -79,14 +68,10 @@ namespace TypeUtils.Services.Impl
 
                 // Create mapper
                 var propertyMapper = _propertyMapperFactory
-                    .createPropertyMapper<T_Source, T_Target>(mapping);
+                    .createPropertyMapper(mapping);
 
                 // cache mapper
-                _propertyMapperLookup[key] = new MapperHolder()
-                {
-                    Mapper = propertyMapper,
-                    TargetFactory = factory
-                };
+                _propertyMapperLookup[key] = propertyMapper;
             }
         }
 
@@ -112,19 +97,21 @@ namespace TypeUtils.Services.Impl
         /// <typeparam name="T_Target"></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
-        public IEnumerable<T_Target> map<T_Source, T_Target>(IEnumerable<T_Source> source)
+        public IEnumerable<T_Target> map<T_Source, T_Target>(ICollection<T_Source> source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            var result = new List<T_Target>();
+            var result = new List<T_Target> (source.Count);
 
             var mapper = getMapper<T_Source, T_Target>();
+            object target = null;
+
             foreach (var obj in source)
             {
-                var newObj = mapper.TargetFactory();
-                mapper.Mapper.map(obj, newObj);
-                result.Add((T_Target)newObj);
+                target = mapper.createTarget();
+                mapper.map(obj, target);
+                result.Add((T_Target)target);
             }
 
             return result;
@@ -138,29 +125,29 @@ namespace TypeUtils.Services.Impl
         /// <typeparam name="T_Target"></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>        
-        public IEnumerable<T_Target> mapParallel<T_Source, T_Target>(IEnumerable<T_Source> source)
+        public IEnumerable<T_Target> mapParallel<T_Source, T_Target>(IList<T_Source> source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            var sourceLst = source.ToArray();
-
-            var result = new T_Target[sourceLst.Length];
+            var result = new T_Target[source.Count];
 
             var mapper = getMapper<T_Source, T_Target>();
-            Parallel.For(0, sourceLst.Length, i =>
+            object target = null;
+
+            Parallel.For(0, source.Count, i =>
             {
-                var newObj = mapper.TargetFactory();
-                mapper.Mapper.map(sourceLst[i], newObj);
-                result[i] = (T_Target)newObj;
+                target = mapper.createTarget();
+                mapper.map(source[i], target);
+                result[i] = (T_Target)target;
             });
 
             return result;
         }
 
-        private MapperHolder getMapper<T_Source, T_Target>()
+        private IPropertyMapper getMapper<T_Source, T_Target>()
         {
-            MapperHolder mapper = null;
+            IPropertyMapper mapper = null;
 
             lock (_propertyMapperLookupLock)
             {

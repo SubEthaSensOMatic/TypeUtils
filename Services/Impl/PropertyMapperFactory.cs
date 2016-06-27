@@ -39,6 +39,8 @@ namespace TypeUtils.Services.Impl
 
             var mapper = createMapperType(typeName, mapping);
 
+            mapper.Members.Add(createTargetFactoryMethod(mapping));
+
             if (typeof(T_Source) != typeof(object) || typeof(T_Target) != typeof(object))
                 mapper.Members.Add(createMapMethod(mapping));
 
@@ -114,6 +116,39 @@ namespace TypeUtils.Services.Impl
             mapper.Members.Add(constructor);
 
             return mapper;
+        }
+
+        private CodeMemberMethod createTargetFactoryMethod<T_Source, T_Target>(Mapping<T_Source, T_Target> mapping)
+        {
+            var factoryMethod = new CodeMemberMethod()
+            {
+                Name = "createTarget",
+                Attributes = MemberAttributes.Public,
+                ReturnType = new CodeTypeReference(typeof(object))
+            };
+
+            if (mapping.TargetFactory != null)
+            {
+                factoryMethod.Statements.Add(new CodeMethodReturnStatement(new CodeSnippetExpression(
+                    "_mapping.TargetFactory()")));
+            }
+            else
+            {
+                var ctor = typeof(T_Target).GetConstructor(Type.EmptyTypes);
+                if (ctor != null)
+                {
+                    factoryMethod.Statements.Add(new CodeMethodReturnStatement(
+                        new CodeObjectCreateExpression(
+                            new CodeTypeReference(typeof(T_Target)))));
+                }
+                else
+                {
+                    factoryMethod.Statements.Add(new CodeMethodReturnStatement(
+                        new CodePrimitiveExpression(null)));
+                }
+            }
+
+            return factoryMethod;
         }
 
         private CodeMemberMethod createMapMethod<T_Source, T_Target>(Mapping<T_Source, T_Target> mapping)

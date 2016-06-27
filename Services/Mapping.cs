@@ -52,6 +52,11 @@ namespace TypeUtils.Services
         public Type TargetType { get { return typeof(T_Target); } }
 
         /// <summary>
+        /// Creation of target object
+        /// </summary>
+        public Func<T_Target> TargetFactory { get; private set; }
+
+        /// <summary>
         /// Type conversion override
         /// </summary>
         public ITypeConverter Converter { get; set; }
@@ -72,6 +77,17 @@ namespace TypeUtils.Services
         /// Rules
         /// </summary>
         private List<MappingRule<T_Source, T_Target>> _rules = new List<MappingRule<T_Source, T_Target>>();
+
+        /// <summary>
+        /// Target object creation
+        /// </summary>
+        /// <param name="factory"></param>
+        /// <returns></returns>
+        public Mapping<T_Source, T_Target> targetFactory(Func<T_Target> factory)
+        {
+            TargetFactory = factory;
+            return this;
+        }
 
         /// <summary>
         /// Map one property name to another property name

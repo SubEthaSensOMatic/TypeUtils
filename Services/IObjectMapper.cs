@@ -38,7 +38,7 @@ namespace TypeUtils.Services
         /// <typeparam name="T_Target"></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
-        IEnumerable<T_Target> map<T_Source, T_Target>(IEnumerable<T_Source> source);
+        IEnumerable<T_Target> map<T_Source, T_Target>(ICollection<T_Source> source);
 
         /// <summary>
         /// Parallely map enumeration of sourc objects to target objects. Target objects
@@ -48,6 +48,6 @@ namespace TypeUtils.Services
         /// <typeparam name="T_Target"></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
-        IEnumerable<T_Target> mapParallel<T_Source, T_Target>(IEnumerable<T_Source> source);
+        IEnumerable<T_Target> mapParallel<T_Source, T_Target>(IList<T_Source> source);
     }
 }

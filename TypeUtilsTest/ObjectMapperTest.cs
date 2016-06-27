@@ -27,10 +27,24 @@ namespace TypeUtilsTest
     public class ObjectMapperTest
     {
         public static IObjectMapper _mapper;
+        public static List<Arthur> _performanceData;
 
         [ClassInitialize]
         public static void initClass(TestContext testContext)
         {
+            _mapper = ObjectMapper.Current;
+
+            var arthur = new Arthur()
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "Arthur",
+                LastName = "Dent"
+            };
+
+            _performanceData = new List<Arthur>();
+            for (int i = 0; i < 1000000; i++)
+                _performanceData.Add(arthur);
+
             var mapping = new Mapping<Arthur, Ford>()
                 .map("Id")
                 .map("TimeOfBirth")
@@ -39,9 +53,23 @@ namespace TypeUtilsTest
                     target.Name = source.FirstName + " " + source.LastName;
                 });
 
-            _mapper = ObjectMapper.Current;
+            _mapper.registerMapping(mapping, () => new Ford());
 
-            _mapper.registerMapping(mapping);
+            var mappingPerf = new Mapping<Arthur, Arthur>()
+                .map("Id")
+                .map("TimeOfBirth")
+                .map("LastName", "Name");
+
+            _mapper.registerMapping(mappingPerf, () => new Arthur());
+
+
+            var mappingToDict = new Mapping<Arthur, Dictionary<string, object>>()
+                .map("Id", (s, t, v) => t["Id"] = v)
+                .map("TimeOfBirth", (s, t, v) => t["TimeOfBirth"] = v)
+                .map("LastName", (s, t, v) => t["LastName"] = v)
+                .map("FirstName", (s, t, v) => t["FirstName"] = v);
+
+            _mapper.registerMapping(mappingToDict);
         }
 
 
@@ -64,21 +92,30 @@ namespace TypeUtilsTest
         }
 
         [TestMethod]
-        public void Performance()
+        public void DictionaryMappingTest()
         {
             var source = new Arthur()
             {
                 Id = Guid.NewGuid(),
                 FirstName = "Arthur",
-                LastName = "Dent"
+                LastName = "Dent",
+                TimeOfBirth = DateTime.Now
             };
 
-            var lst = new List<Arthur>();
-            for (int i = 0; i < 1000000; i++)
-                lst.Add(source);
+            var result = _mapper.map<Arthur, Dictionary<string, object>>(new Arthur[] { source });
 
-            _mapper.mapParallel<Arthur, Ford>(lst);
+            Assert.AreEqual(1, result.Count());
+            Assert.AreEqual(result.First()["Id"], source.Id);
+            Assert.AreEqual(result.First()["FirstName"], source.FirstName);
+            Assert.AreEqual(result.First()["LastName"], source.LastName);
+            Assert.AreEqual(result.First()["TimeOfBirth"], source.TimeOfBirth);
         }
-        
+
+        [TestMethod]
+        public void Performance()
+        {
+            _mapper.map<Arthur, Arthur>(_performanceData);
+        }
+
     }
 }

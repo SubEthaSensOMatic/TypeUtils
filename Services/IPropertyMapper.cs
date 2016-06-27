@@ -2,6 +2,8 @@
 {
     public interface IPropertyMapper
     {
+        object createTarget();
+
         void map(object source, object target);
     }
 
