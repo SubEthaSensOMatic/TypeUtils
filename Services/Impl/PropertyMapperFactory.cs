@@ -62,13 +62,22 @@ namespace TypeUtils.Services.Impl
             var compileUnit = new CodeCompileUnit();
             compileUnit.Namespaces.Add(codeNamespace);
 
+#if DEBUG
             var compilerParameter = new CompilerParameters(libs.ToArray())
             {
                 GenerateExecutable = false,
-                GenerateInMemory = true, //false,
-                IncludeDebugInformation = false,
-                //TempFiles = new TempFileCollection(Environment.GetEnvironmentVariable("TEMP"), true)
+                GenerateInMemory = false,
+                IncludeDebugInformation = true,
+                TempFiles = new TempFileCollection(Environment.GetEnvironmentVariable("TEMP"), true)
             };
+#else
+            var compilerParameter = new CompilerParameters(libs.ToArray())
+            {
+                GenerateExecutable = false,
+                GenerateInMemory = true,
+                IncludeDebugInformation = false
+            };
+#endif
 
             var results = (new CSharpCodeProvider())
                 .CompileAssemblyFromDom(compilerParameter, compileUnit);
@@ -93,25 +102,41 @@ namespace TypeUtils.Services.Impl
             mapper.IsClass = true;
             mapper.BaseTypes.Add(new CodeTypeReference(typeof(IPropertyMapper<T_Source, T_Target>)));
 
-            mapper.Members.Add(new CodeMemberField(typeof(Mapping<T_Source, T_Target>), "_mapping")
-            {
-                Attributes = MemberAttributes.Private
-            });
-
-            mapper.Members.Add(new CodeMemberField(typeof(ITypeConverter), "_converter")
-            {
-                Attributes = MemberAttributes.Private
-            });
-
+            /////////////////////////////////////////////////
+            // Constructor
             var constructor = new CodeConstructor();
             constructor.Attributes = MemberAttributes.Public | MemberAttributes.Final;
             constructor.Parameters.Add(new CodeParameterDeclarationExpression(
                 typeof(Mapping<T_Source, T_Target>), "mapping"));
 
+            /////////////////////////////////////////////////
+            // Member holding mapping object
+            mapper.Members.Add(new CodeMemberField(typeof(Mapping<T_Source, T_Target>), "_mapping")
+            {
+                Attributes = MemberAttributes.Private
+            });
             constructor.Statements.Add(new CodeSnippetStatement("_mapping = mapping;"));
 
+            /////////////////////////////////////////////////
+            // Member holding type converter
+            mapper.Members.Add(new CodeMemberField(typeof(ITypeConverter), "_converter")
+            {
+                Attributes = MemberAttributes.Private
+            });
             constructor.Statements.Add(new CodeSnippetStatement(string.Format(
                 "_converter = mapping.Converter ?? {0}.Current;", typeof(TypeConverter).FullName)));
+
+            /////////////////////////////////////////////////
+            // One member per rule
+            for (int i = 0; i < mapping.Count; i++)
+            {
+                mapper.Members.Add(new CodeMemberField(typeof(MappingRule<T_Source, T_Target>), "_rule" + i)
+                {
+                    Attributes = MemberAttributes.Private
+                });
+                constructor.Statements.Add(new CodeSnippetStatement(
+                    string.Format("_rule{0} = mapping[{0}];", i)));
+            }
 
             mapper.Members.Add(constructor);
 
@@ -124,7 +149,7 @@ namespace TypeUtils.Services.Impl
             {
                 Name = "createTarget",
                 Attributes = MemberAttributes.Public,
-                ReturnType = new CodeTypeReference(typeof(object))
+                ReturnType = new CodeTypeReference(typeof(T_Target)),
             };
 
             if (mapping.TargetFactory != null)
@@ -159,7 +184,8 @@ namespace TypeUtils.Services.Impl
             var mapMethod = new CodeMemberMethod()
             {
                 Name = "map",
-                Attributes = MemberAttributes.Public
+                Attributes = MemberAttributes.Public,
+                ReturnType = new CodeTypeReference(typeof(object))
             };
 
             mapMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "source"));
@@ -181,7 +207,9 @@ namespace TypeUtils.Services.Impl
             });
 
             mapMethod.Statements.Add(callMap);
-            
+
+            mapMethod.Statements.Add(new CodeMethodReturnStatement(new CodeArgumentReferenceExpression("target")));
+
             return mapMethod;
         }
 
@@ -193,7 +221,8 @@ namespace TypeUtils.Services.Impl
             var mapMethod = new CodeMemberMethod()
             {
                 Name = "map",
-                Attributes = MemberAttributes.Public
+                Attributes = MemberAttributes.Public,
+                ReturnType = new CodeTypeReference(typeof(T_Target))
             };
 
             mapMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(T_Source), "source"));
@@ -231,6 +260,8 @@ namespace TypeUtils.Services.Impl
                 
             }
 
+            mapMethod.Statements.Add(new CodeMethodReturnStatement(new CodeArgumentReferenceExpression("target")));
+
             return mapMethod;
         }
 
@@ -262,7 +293,7 @@ namespace TypeUtils.Services.Impl
             {
                 // Conversion needed
                 result = new CodeSnippetStatement(string.Format(
-                    @"target.{0} = _converter.convert<{1}>(source.{2}, _mapping[{3}].Format);",
+                    @"target.{0} = _converter.convert<{1}>(source.{2}, _rule{3}.Format);",
                     targetProperty.Name,
                     targetProperty.PropertyType.FullName,
                     sourceProperty.Name,
@@ -282,7 +313,7 @@ namespace TypeUtils.Services.Impl
 
             // No conversion needed
             return new CodeSnippetStatement(string.Format(
-                @"_mapping[{0}].Setter(source, target, source.{1});",
+                @"_rule{0}.Setter(source, target, source.{1});",
                 ruleIdx,
                 sourceProperty.Name));
         }
@@ -297,7 +328,7 @@ namespace TypeUtils.Services.Impl
 
             // No conversion needed
             return new CodeSnippetStatement(string.Format(
-                @"target.{0} = _converter.convert<{1}>(_mapping[{2}].Getter(source, target));",
+                @"target.{0} = _converter.convert<{1}>(_rule{2}.Getter(source, target));",
                 targetProperty.Name,
                 targetProperty.PropertyType.FullName,
                 ruleIdx));
@@ -307,7 +338,7 @@ namespace TypeUtils.Services.Impl
         {
             // No conversion needed
             return new CodeSnippetStatement(string.Format(
-                @"_mapping[{0}].Setter(source, target, _mapping[{1}].Getter(source, target));",
+                @"_rule{0}.Setter(source, target, _rule{1}.Getter(source, target));",
                 ruleIdx, ruleIdx));
         }
 

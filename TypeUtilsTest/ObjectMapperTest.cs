@@ -21,6 +21,8 @@ namespace TypeUtilsTest
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public DateTime TimeOfBirth { get; set; }
+        public int Age { get; set; }
+        public string Address { get; set; }
     }
 
     [TestClass]
@@ -53,14 +55,17 @@ namespace TypeUtilsTest
                     target.Name = source.FirstName + " " + source.LastName;
                 });
 
-            _mapper.registerMapping(mapping, () => new Ford());
+            _mapper.registerMapping(mapping);
 
             var mappingPerf = new Mapping<Arthur, Arthur>()
                 .map("Id")
                 .map("TimeOfBirth")
-                .map("LastName", "Name");
+                .map("LastName")
+                .map("FirstName")
+                .map("Age")
+                .map("Address");
 
-            _mapper.registerMapping(mappingPerf, () => new Arthur());
+            _mapper.registerMapping(mappingPerf);
 
 
             var mappingToDict = new Mapping<Arthur, Dictionary<string, object>>()
@@ -114,7 +119,9 @@ namespace TypeUtilsTest
         [TestMethod]
         public void Performance()
         {
-            _mapper.map<Arthur, Arthur>(_performanceData);
+            foreach (var o in _mapper.map<Arthur, Arthur>(_performanceData))
+            {
+            }
         }
 
     }

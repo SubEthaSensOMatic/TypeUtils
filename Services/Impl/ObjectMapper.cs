@@ -53,8 +53,7 @@ namespace TypeUtils.Services.Impl
         /// <typeparam name="T_Source"></typeparam>
         /// <typeparam name="T_Target"></typeparam>
         /// <param name="mapping"></param>
-        /// <param name="factory">Target object factory</param>
-        public void registerMapping<T_Source, T_Target>(Mapping<T_Source, T_Target> mapping, TargetFactoryDelegate factory = null)
+        public void registerMapping<T_Source, T_Target>(Mapping<T_Source, T_Target> mapping)
         {
             if (mapping == null)
                 throw new ArgumentNullException(nameof(mapping));
@@ -97,24 +96,15 @@ namespace TypeUtils.Services.Impl
         /// <typeparam name="T_Target"></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
-        public IEnumerable<T_Target> map<T_Source, T_Target>(ICollection<T_Source> source)
+        public IEnumerable<T_Target> map<T_Source, T_Target>(IEnumerable<T_Source> source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            var result = new List<T_Target> (source.Count);
-
             var mapper = getMapper<T_Source, T_Target>();
-            object target = null;
 
-            foreach (var obj in source)
-            {
-                target = mapper.createTarget();
-                mapper.map(obj, target);
-                result.Add((T_Target)target);
-            }
-
-            return result;
+            foreach (var sourceObj in source)
+                yield return mapper.map(sourceObj, mapper.createTarget());
         }
 
         /// <summary>
@@ -125,7 +115,7 @@ namespace TypeUtils.Services.Impl
         /// <typeparam name="T_Target"></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>        
-        public IEnumerable<T_Target> mapParallel<T_Source, T_Target>(IList<T_Source> source)
+        public IList<T_Target> mapParallel<T_Source, T_Target>(IList<T_Source> source)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
@@ -133,19 +123,18 @@ namespace TypeUtils.Services.Impl
             var result = new T_Target[source.Count];
 
             var mapper = getMapper<T_Source, T_Target>();
-            object target = null;
 
             Parallel.For(0, source.Count, i =>
             {
-                target = mapper.createTarget();
-                mapper.map(source[i], target);
-                result[i] = (T_Target)target;
+                mapper.map(
+                    source[i],
+                    result[i] = mapper.createTarget());
             });
 
             return result;
         }
 
-        private IPropertyMapper getMapper<T_Source, T_Target>()
+        private IPropertyMapper<T_Source, T_Target> getMapper<T_Source, T_Target>()
         {
             IPropertyMapper mapper = null;
 
@@ -157,7 +146,7 @@ namespace TypeUtils.Services.Impl
                     throw new InvalidOperationException("Mapping not registered!");
             }
 
-            return mapper;
+            return (IPropertyMapper<T_Source, T_Target>)mapper;
         }
     }
 }
