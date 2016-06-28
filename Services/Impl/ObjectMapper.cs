@@ -101,7 +101,7 @@ namespace TypeUtils.Services.Impl
             if (source == null)
                 throw new ArgumentNullException(nameof(source));
 
-            var mapper = getMapper<T_Source, T_Target>();
+            var mapper = getPropertyMapper<T_Source, T_Target>();
 
             foreach (var sourceObj in source)
                 yield return mapper.map(sourceObj, mapper.createTarget());
@@ -122,7 +122,7 @@ namespace TypeUtils.Services.Impl
 
             var result = new T_Target[source.Count];
 
-            var mapper = getMapper<T_Source, T_Target>();
+            var mapper = getPropertyMapper<T_Source, T_Target>();
 
             Parallel.For(0, source.Count, i =>
             {
@@ -134,7 +134,7 @@ namespace TypeUtils.Services.Impl
             return result;
         }
 
-        private IPropertyMapper<T_Source, T_Target> getMapper<T_Source, T_Target>()
+        public IPropertyMapper<T_Source, T_Target> getPropertyMapper<T_Source, T_Target>()
         {
             IPropertyMapper mapper = null;
 

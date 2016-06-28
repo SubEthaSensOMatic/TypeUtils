@@ -48,5 +48,13 @@ namespace TypeUtils.Services
         /// <param name="source"></param>
         /// <returns></returns>
         IList<T_Target> mapParallel<T_Source, T_Target>(IList<T_Source> source);
+
+        /// <summary>
+        /// Returns registered mapper for types
+        /// </summary>
+        /// <typeparam name="T_Source"></typeparam>
+        /// <typeparam name="T_Target"></typeparam>
+        /// <returns></returns>
+        IPropertyMapper<T_Source, T_Target> getPropertyMapper<T_Source, T_Target>();
     }
 }
